@@ -1,6 +1,7 @@
 # scanvi-explainer
 
 [![build][build-badge]][build-link]
+[![Documentation Status][docs]][docs-link]
 
 Interpretability extension for [scANVI] using [SHAP] package.
 
@@ -17,6 +18,12 @@ $ pip install scanvi-explainer
 ```console
 $ git clone https://github.com/brickmanlab/scanvi-explainer.git && cd scanvi-explainer
 $ uv sync
+```
+
+## Build documentation
+
+```console
+$ sphinx-build -M html docs docs/_build
 ```
 
 ## Citation
@@ -41,6 +48,8 @@ Please consider citing scANVI Explainer if you use in your research.
 }
 ```
 
+[docs]: https://readthedocs.org/projects/scanvi-explainer/badge/?version=latest
+[docs-link]: https://scanvi-explainer.readthedocs.io/en/latest/?badge=latest
 [build-badge]: https://github.com/brickmanlab/scanvi-explainer/actions/workflows/build.yml/badge.svg
 [build-link]: https://github.com/brickmanlab/scanvi-explainer/actions/workflows/build.yml
 [scANVI]: https://docs.scvi-tools.org/en/stable/api/reference/scvi.model.SCANVI.html#scvi.model.SCANVI

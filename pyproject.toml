@@ -29,7 +29,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/brickmanlab/scanvi-explainer"
-Documentation = "https://readthedocs.org"
+Documentation = "https://scanvi-explainer.readthedocs.io"
 Repository = "https://github.com/brickmanlab/scanvi-explainer.git"
 Issues = "https://github.com/brickmanlab/scanvi-explainer/issues"
 Changelog = "https://github.com/brickmanlab/scanvi-explainer/blob/master/CHANGELOG.md"
