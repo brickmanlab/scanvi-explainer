@@ -1,10 +1,10 @@
 # scanvi-explainer
 
-[![build](https://github.com/brickmanlab/scanvi-explainer/actions/workflows/build.yml/badge.svg)](https://github.com/brickmanlab/scanvi-explainer/actions/workflows/build.yml)
+[![build][build-badge]][build-link]
 
 Interpretability extension for [scANVI] using [SHAP] package.
 
-Please see our [example](Example.ipynb) notebook on how to run scANVI Explainer.
+Please see our [example](docs/notebooks/Example.ipynb) notebook on how to run scANVI Explainer.
 
 ## Installation
 
@@ -19,16 +19,13 @@ $ git clone https://github.com/brickmanlab/scanvi-explainer.git && cd scanvi-exp
 $ uv sync
 ```
 
-[scANVI]: https://docs.scvi-tools.org/en/stable/api/reference/scvi.model.SCANVI.html#scvi.model.SCANVI
-[SHAP]: https://github.com/shap/shap
-
 ## Citation
 
 Please consider citing scANVI Explainer if you use in your research.
 
 > Deep Learning Based Models for Preimplantation Mouse and Human Development <br>
 > Martin Proks, Nazmus Salehin, Joshua M. Brickman <br>
-> bioRxiv 2024.02.16.580649; doi: [10.1101/2024.02.16.580649](https://doi.org/10.1101/2024.02.16.580649)
+> bioRxiv 2024.02.16.580649; doi: [10.1101/2024.02.16.580649]
 
 ```BibTeX
 @article{Proks2024.02.16.580649,
@@ -43,3 +40,9 @@ Please consider citing scANVI Explainer if you use in your research.
 	journal = {bioRxiv}
 }
 ```
+
+[build-badge]: https://github.com/brickmanlab/scanvi-explainer/actions/workflows/build.yml/badge.svg
+[build-link]: https://github.com/brickmanlab/scanvi-explainer/actions/workflows/build.yml
+[scANVI]: https://docs.scvi-tools.org/en/stable/api/reference/scvi.model.SCANVI.html#scvi.model.SCANVI
+[SHAP]: https://github.com/shap/shap
+[10.1101/2024.02.16.580649]: https://doi.org/10.1101/2024.02.16.580649

@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "scanvi-explainer"
 version = "0.1.0"
@@ -23,16 +27,19 @@ classifiers = [
   "Programming Language :: Python :: 3.10"
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [project.urls]
 Homepage = "https://github.com/brickmanlab/scanvi-explainer"
-# Documentation = "https://readthedocs.org"
+Documentation = "https://readthedocs.org"
 Repository = "https://github.com/brickmanlab/scanvi-explainer.git"
 Issues = "https://github.com/brickmanlab/scanvi-explainer/issues"
 Changelog = "https://github.com/brickmanlab/scanvi-explainer/blob/master/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["ruff", "huggingface_hub"]
+doc = [
+  "setuptools",
+  "sphinx",
+  "myst-nb>=1.1",
+  "sphinx-book-theme>=1",
+  "sphinxcontrib-bibtex>=1"
+]
