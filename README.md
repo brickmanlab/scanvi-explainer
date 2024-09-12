@@ -1,5 +1,7 @@
 # scanvi-explainer
 
+[![build](https://github.com/brickmanlab/scanvi-explainer/actions/workflows/build.yml/badge.svg)](https://github.com/brickmanlab/scanvi-explainer/actions/workflows/build.yml)
+
 Interpretability extension for [scANVI] using [SHAP] package.
 
 Please see our [example](Example.ipynb) notebook on how to run scANVI Explainer.
