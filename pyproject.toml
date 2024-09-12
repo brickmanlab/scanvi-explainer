@@ -1,0 +1,40 @@
+[project]
+name = "scanvi_explainer"
+version = "0.1.0"
+description = "Exapliner of scANVI using SHAP"
+authors = [
+    {name = "Martin Proks", email = "martin.proks@sund.ku.dk"},
+    {name = "Nazmus M Salehin", email = "naz.salehin@sund.ku.dk"}
+]
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+keywords = ["shap", "scanvi", "explainer", "interpretability"]
+dependencies = [
+    "shap>=0.41.0",
+]
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.10"
+]
+
+[project.urls]
+Homepage = "https://github.com/brickmanlab/scanvi-explainer"
+# Documentation = "https://readthedocs.org"
+Repository = "https://github.com/brickmanlab/scanvi-explainer.git"
+Issues = "https://github.com/brickmanlab/scanvi-explainer/issues"
+Changelog = "https://github.com/brickmanlab/scanvi-explainer/blob/master/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "huggingface_hub"
+]
