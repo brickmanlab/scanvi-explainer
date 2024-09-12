@@ -24,12 +24,12 @@ $ uv sync
 
 Please consider citing scANVI Explainer if you use in your research.
 
-> Deep Learning Based Models for Preimplantation Mouse and Human Development
-> Martin Proks, Nazmus Salehin, Joshua M. Brickman
-> bioRxiv 2024.02.16.580649; doi: https://doi.org/10.1101/2024.02.16.580649
+> Deep Learning Based Models for Preimplantation Mouse and Human Development <br>
+> Martin Proks, Nazmus Salehin, Joshua M. Brickman <br>
+> bioRxiv 2024.02.16.580649; doi: [10.1101/2024.02.16.580649](https://doi.org/10.1101/2024.02.16.580649)
 
 ```BibTeX
-@article {Proks2024.02.16.580649,
+@article{Proks2024.02.16.580649,
 	author = {Proks, Martin and Salehin, Nazmus and Brickman, Joshua M.},
 	title = {Deep Learning Based Models for Preimplantation Mouse and Human Development},
 	elocation-id = {2024.02.16.580649},
