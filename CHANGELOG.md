@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## Version 0.2.0
+
+> [!WARNING]  
+> **Breaking changes**
+> New changes to the API, please see the documentation
+
+### Changed
+
+- new api documentation
+- new api changes
+- use uvx for running tools
+
 ## Version 0.1.0
 
 **NOTE**: Use this version with initial release of the AI models `v1.0`.
