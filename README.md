@@ -23,7 +23,7 @@ $ uv sync
 ## Build documentation
 
 ```console
-$ sphinx-build -M html docs docs/_build
+$ rm -rf docs/{generated,_build} && sphinx-build -M html docs docs/_build
 ```
 
 ## Citation

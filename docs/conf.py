@@ -10,6 +10,9 @@ from datetime import datetime
 from importlib.metadata import metadata
 from pathlib import Path
 
+HERE = Path(__file__).parent
+sys.path[:0] = [str(HERE.parent)]
+
 # -- Project information -----------------------------------------------------
 
 # NOTE: If you installed your project in editable mode, this might be stale.
@@ -120,8 +123,8 @@ html_theme_options = {
 
 pygments_style = "default"
 
-nitpick_ignore = [
-    # If building the documentation fails because of a missing link that is outside your control,
-    # you can add an exception to this list.
-    ("optional"),
-]
+# nitpick_ignore = [
+#     # If building the documentation fails because of a missing link that is outside your control,
+#     # you can add an exception to this list.
+#     ("py:class", "py:obj", "optional"),
+# ]

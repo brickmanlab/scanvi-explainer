@@ -4,7 +4,7 @@ import anndata
 import numpy as np
 import torch
 from scvi import REGISTRY_KEYS
-from scvi.model._scanvi import SCANVI
+from scvi.model import SCANVI
 from sklearn.model_selection import train_test_split
 
 
@@ -60,9 +60,9 @@ def train_test_group_split(
         Annotated dataset
     groupby : str
         Column in metadata by which the dataset should be split by
-    train_size : float, optional
+    train_size : :obj:`float`, optional
         Training size (background), by default 0.8
-    batch_size : int, optional
+    batch_size : :obj:`int`, optional
         Number of cells used from each group, by default 128
 
     Returns
