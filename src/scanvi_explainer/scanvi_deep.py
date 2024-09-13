@@ -1,49 +1,119 @@
+import logging
 import warnings
 
 import numpy as np
+import rich
 from packaging import version
+from scvi import REGISTRY_KEYS
+from scvi.model._scanvi import SCANVI
 from shap import Explainer
-from tqdm import tqdm
+from torch import Tensor
+from tqdm.auto import tqdm
+
+from .utils import get_labels_key, get_layer_key, train_test_group_split
 
 torch = None
 
 
 class SCANVIDeep(Explainer):
-    def __init__(self, model, data):
-        # try and import pytorch
-        global torch
-        if torch is None:
-            import torch
+    """SCANVIDeep is extension of DeepExplainer
 
-            if version.parse(torch.__version__) < version.parse("0.4"):
-                warnings.warn(
-                    "Your PyTorch version is older than 0.4 and not supported."
-                )
+    Parameters
+    ----------
+    Explainer : type[Explainer]
+        Main Explainer class from shap package
+    """
 
-        # check if we have multiple inputs
-        if type(data) != list:
-            data = [data]
-        self.data = data
+    def __init__(
+        self,
+        model: SCANVI,
+        train_size: float = 0.8,
+        batch_size: int = 128,
+    ):
+        """Constructor setting up expected values.
+
+        Currently categorical not continuous covariates are not supported.
+
+        Parameters
+        ----------
+        model : SCANVI
+            Trained scANVI model
+        train_size : float, optional
+            Training size (background), by default 0.8
+        batch_size : int, optional
+            Number of cells used from each group, by default 128
+            To ignore the batch_size subsetting, set batch_size=-1
+        """
+        import torch
+
+        if version.parse(torch.__version__) < version.parse("0.4"):
+            warnings.warn("Your PyTorch version is older than 0.4 and not supported.")
+
+        if not isinstance(model, SCANVI):
+            raise ValueError(
+                f"Provided model is not scANVI! Provided instead: {type(model)}"
+            )
+
+        self.labels_key = get_labels_key(model)
+        self.layer_key = get_layer_key(model)
+        self.data, self.test = train_test_group_split(
+            model.adata,
+            self.labels_key,
+            train_size,
+            batch_size,
+            self.layer_key,
+        )
+
+        self.adata = model.adata
         self.layer = None
+        self.train_size = train_size
+        self.batch_size = batch_size
         self.input_handle = None
-        self.interim = False
         self.expected_value = None  # to keep the DeepExplainer base happy
-        self.model = model.eval()
+        self.model = model.module.eval()
 
         with torch.no_grad():
-            outputs = model.classifier(model(*data)[0]["z"])
+            outputs = self.model.classify(
+                self.data[REGISTRY_KEYS.X_KEY],
+                batch_index=self.data[REGISTRY_KEYS.BATCH_KEY],
+                cat_covs=None,
+                cont_covs=None,
+                use_posterior_mean=True,
+            )
             self.device = model.device
             self.multi_output = True
             self.num_outputs = outputs.shape[1]
             self.expected_value = outputs.mean(0).cpu().numpy()
+            # cleanup
+            del outputs
+            torch.cuda.empty_cache()
+
+    def __repr__(self):
+        text = f"{self.__class__.__name__} with the following parameters:\n"
+        text += f"train_size={self.train_size}, test_size={(1.0 - self.train_size):.1f}, batch_size={self.batch_size}, "
+        text += f"labels_key={self.labels_key}, layers_key={self.layer_key}\n"
+        text += f"training_on={self.device}"
+        rich.print(text)
+        return ""
+
+    def get_train_test(self) -> tuple[dict[str, Tensor], dict[str, Tensor]]:
+        return self.data, self.test
+
+    def memory_stats(self):
+        """Helper function to track CUDA memory usage."""
+        import torch
+
+        if self.device.type == "cuda":
+            print(f"Allocated: {(torch.cuda.memory_allocated(0) / 1024**3):.2f} GB")
+            print(f"Cached   : {(torch.cuda.memory_reserved(0) / 1024**3):.2f} GB")
+            print()
 
     def add_target_handle(self, layer):
         input_handle = layer.register_forward_hook(get_target_input)
         self.target_handle = input_handle
 
     def add_handles(self, model, forward_handle, backward_handle):
-        """
-        Add handles to all non-container layers in the model.
+        """Add handles to all non-container layers in the model.
         Recursively for non-container layers
         """
         handles_list = []
@@ -55,12 +125,11 @@ class SCANVIDeep(Explainer):
                 )
         else:  # leaves
             handles_list.append(model.register_forward_hook(forward_handle))
-            handles_list.append(model.register_backward_hook(backward_handle))
+            handles_list.append(model.register_full_backward_hook(backward_handle))
         return handles_list
 
     def remove_attributes(self, model):
-        """
-        Removes the x and y attributes which were added by the forward handles
+        """Removes the x and y attributes which were added by the forward handles
         Recursively searches for non-container layers
         """
         for child in model.children():
@@ -76,110 +145,85 @@ class SCANVIDeep(Explainer):
                 except AttributeError:
                     pass
 
-    def gradient(self, idx, inputs):
+    def gradient(self, idx, input_x, input_batch):
+        import torch
+
+        logging.debug("Starting gradient")
         self.model.zero_grad()
-        X = [inputs["X"].requires_grad_()]
-        outputs = self.model.classifier(self.model(inputs)[0]["z"])
+        X = input_x.requires_grad_()
 
+        outputs = self.model.classify(
+            input_x,
+            batch_index=input_batch,
+            cat_covs=None,
+            cont_covs=None,
+            use_posterior_mean=True,
+        )
         selected = [val for val in outputs[:, idx]]
-        grads = []
-        for idx, x in enumerate(X):
-            grad = torch.autograd.grad(
-                selected,
-                x,
-                retain_graph=True if idx + 1 < len(X) else None,
-                allow_unused=True,
-            )[0]
-            if grad is not None:
-                grad = grad.cpu().numpy()
-            else:
-                grad = torch.zeros_like(X[idx]).cpu().numpy()
-            grads.append(grad)
-        return grads
 
-    def shap_values(self, X):
+        grad = torch.autograd.grad(selected, X, retain_graph=False, allow_unused=True)[
+            0
+        ]
+        if grad is not None:
+            return grad.cpu().numpy()
+
+        return torch.zeros_like(X).cpu().numpy()
+
+    def shap_values(self):
+        import torch
+
         # X ~ self.model_input
         # X_data ~ self.data
 
-        assert type(X) != list, "Expected a single tensor model input!"
-        X = [X]
-
-        X_batch = [x["batch"].detach().to(self.device) for x in X]
-        X_labels = [x["labels"].detach().to(self.device) for x in X]
-        X = [x["X"].detach().to(self.device) for x in X]
+        X_batch = self.test[REGISTRY_KEYS.BATCH_KEY].detach()
+        X = self.test[REGISTRY_KEYS.X_KEY].detach()
 
         model_output_ranks = (
-            torch.ones((X[0].shape[0], self.num_outputs)).int()
+            torch.ones((X.shape[0], self.num_outputs)).int()
             * torch.arange(0, self.num_outputs).int()
         )
 
         # add the gradient handles
         handles = self.add_handles(self.model, add_interim_values, deeplift_grad)
-        if self.interim:
-            self.add_target_handle(self.layer)
 
         # compute the attributions
         output_phis = []
+        self.memory_stats()
+
         for i in tqdm(range(model_output_ranks.shape[1])):
-            phis = []
+            phis = np.zeros(X.shape)
 
-            for k in range(len(X)):
-                phis.append(np.zeros(X[k].shape))
-
-            for j in range(X[0].shape[0]):
+            for j in range(X.shape[0]):
                 # tile the inputs to line up with the background data samples
-                # correct, it will replicate each row to match the background, but I have no idea
-                # why, and at this point I'm to afraid to ask
-                # moving along
-                tiled_X = [
-                    X[l][j : j + 1].repeat(
-                        (self.data[l]["X"].shape[0],)
-                        + tuple([1 for k in range(len(X[l].shape) - 1)])
-                    )
-                    for l in range(len(X))
-                ]
-                joint_x = [
-                    torch.cat((tiled_X[l], self.data[l]["X"].to(self.device)), dim=0)
-                    for l in range(len(X))
-                ]
+                # correct, it will replicate each row to match the background
+                tiled_X = X[j : j + 1].repeat(
+                    (self.data[REGISTRY_KEYS.X_KEY].shape[0],)
+                    + tuple([1 for _ in range(len(X.shape) - 1)])
+                )
+
+                joint_x = torch.cat((tiled_X, self.data[REGISTRY_KEYS.X_KEY]), dim=0)
+                joint_batch = X_batch[j].repeat(joint_x.shape[0], 1)
                 # run attribution computation graph
                 feature_ind = model_output_ranks[j, i]
-
-                # joint_x need to inject the batch and library size
-                joint_x_injected = {
-                    "X": joint_x[0],
-                    "batch": X_batch[0][j].repeat(joint_x[0].shape[0], 1),
-                    "labels": X_labels[0][j].repeat(joint_x[0].shape[0], 1),
-                }
-                sample_phis = self.gradient(feature_ind, joint_x_injected)
+                sample_phis = self.gradient(feature_ind, joint_x, joint_batch)
 
                 # assign the attributions to the right part of the output arrays
-                for l in range(len(X)):
-                    phis[l][j] = (
-                        (
-                            torch.from_numpy(
-                                sample_phis[l][self.data[l]["X"].shape[0] :]
-                            ).to(self.device)
-                            * (
-                                X[l][j : j + 1].to(self.device)
-                                - self.data[l]["X"].to(self.device)
-                            )
-                        )
-                        .cpu()
-                        .detach()
-                        .numpy()
-                        .mean(0)
+                phis[j] = (
+                    torch.from_numpy(
+                        sample_phis[self.data[REGISTRY_KEYS.X_KEY].shape[0] :]
                     )
+                    * (X[j : j + 1] - self.data[REGISTRY_KEYS.X_KEY])
+                ).mean(0)
+                # .cpu().detach().numpy().mean(0)
 
-            output_phis.append(phis[0])
+            output_phis.append(phis)
+            torch.cuda.empty_cache()
 
         # cleanup; remove all gradient handles
         for handle in handles:
             handle.remove()
         self.remove_attributes(self.model)
-        if self.interim:
-            self.target_handle.remove()
-
+        torch.cuda.empty_cache()
         return output_phis
 
 
@@ -197,7 +241,7 @@ def deeplift_grad(module, grad_input, grad_output):
         if op_handler[module_type].__name__ not in ["passthrough", "linear_1d"]:
             return op_handler[module_type](module, grad_input, grad_output)
     else:
-        print("Warning: unrecognized nn.Module: {}".format(module_type))
+        warnings.warn(f"unrecognized nn.Module: {module_type}")
         return grad_input
 
 
@@ -205,6 +249,8 @@ def add_interim_values(module, input, output):
     """The forward hook used to save interim tensors, detached
     from the graph. Used to calculate the multipliers
     """
+    import torch
+
     try:
         del module.x
     except AttributeError:
@@ -229,15 +275,13 @@ def add_interim_values(module, input, output):
             if func_name in ["maxpool", "nonlinear_1d"]:
                 # only save tensors if necessary
                 if type(input) is tuple:
-                    setattr(module, "x", torch.nn.Parameter(input[0].detach()))
+                    module.x = torch.nn.Parameter(input[0].detach())
                 else:
-                    setattr(module, "x", torch.nn.Parameter(input.detach()))
+                    module.x = torch.nn.Parameter(input.detach())
                 if type(output) is tuple:
-                    setattr(module, "y", torch.nn.Parameter(output[0].detach()))
+                    module.y = torch.nn.Parameter(output[0].detach())
                 else:
-                    setattr(module, "y", torch.nn.Parameter(output.detach()))
-            if module_type in failure_case_modules:
-                input[0].register_hook(deeplift_tensor_grad)
+                    module.y = torch.nn.Parameter(output.detach())
 
 
 def get_target_input(module, input, output):
@@ -248,27 +292,7 @@ def get_target_input(module, input, output):
         del module.target_input
     except AttributeError:
         pass
-    setattr(module, "target_input", input)
-
-
-# From the documentation: "The current implementation will not have the presented behavior for
-# complex Module that perform many operations. In some failure cases, grad_input and grad_output
-# will only contain the gradients for a subset of the inputs and outputs.
-# The tensor hook below handles such failure cases (currently, MaxPool1d). In such cases, the deeplift
-# grad should still be computed, and then appended to the complex_model_gradients list. The tensor hook
-# will then retrieve the proper gradient from this list.
-
-
-failure_case_modules = ["MaxPool1d"]
-
-
-def deeplift_tensor_grad(grad):
-    return_grad = complex_module_gradients[-1]
-    del complex_module_gradients[-1]
-    return return_grad
-
-
-complex_module_gradients = []
+    module.target_input = input
 
 
 def passthrough(module, grad_input, grad_output):
@@ -277,6 +301,8 @@ def passthrough(module, grad_input, grad_output):
 
 
 def maxpool(module, grad_input, grad_output):
+    import torch
+
     pool_to_unpool = {
         "MaxPool1d": torch.nn.functional.max_unpool1d,
         "MaxPool2d": torch.nn.functional.max_unpool2d,
@@ -318,18 +344,14 @@ def maxpool(module, grad_input, grad_output):
             ),
             2,
         )
-    org_input_shape = grad_input[0].shape  # for the maxpool 1d
+
     grad_input = [None for _ in grad_input]
     grad_input[0] = torch.where(
         torch.abs(delta_in) < 1e-7,
         torch.zeros_like(delta_in),
         (xmax_pos + rmax_pos) / delta_in,
     ).repeat(dup0)
-    if module.__class__.__name__ == "MaxPool1d":
-        complex_module_gradients.append(grad_input[0])
-        # the grad input that is returned doesn't matter, since it will immediately be
-        # be overridden by the grad in the complex_module_gradient
-        grad_input[0] = torch.ones(org_input_shape)
+
     return tuple(grad_input)
 
 
@@ -339,6 +361,8 @@ def linear_1d(module, grad_input, grad_output):
 
 
 def nonlinear_1d(module, grad_input, grad_output):
+    import torch
+
     delta_out = (
         module.y[: int(module.y.shape[0] / 2)] - module.y[int(module.y.shape[0] / 2) :]
     )
@@ -390,8 +414,8 @@ op_handler["Sigmoid"] = nonlinear_1d
 op_handler["Tanh"] = nonlinear_1d
 op_handler["Softplus"] = nonlinear_1d
 op_handler["Softmax"] = nonlinear_1d
+op_handler["SELU"] = nonlinear_1d
 
 op_handler["MaxPool1d"] = maxpool
 op_handler["MaxPool2d"] = maxpool
 op_handler["MaxPool3d"] = maxpool
-
