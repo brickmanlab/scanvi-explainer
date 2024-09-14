@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import numpy.typing as npt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from scvi import REGISTRY_KEYS
@@ -9,7 +9,7 @@ from .scanvi_deep import SCANVIDeep
 
 def feature_plot(
     explainer: SCANVIDeep,
-    shap_values: npt.NDArray,
+    shap_values: np.ndarray,
     subset: bool = False,
     top_n: int = 10,
 ) -> None:
@@ -17,11 +17,11 @@ def feature_plot(
 
     Parameters
     ----------
-    explainer : SCANVIDeep
-        SCANVIDeep explainer
-    shap_values : npt.NDArray
-        Expected SHAP values
-    subset : bool, optional
+    explainer
+        :class:`~scanvi_explainer.scanvi_deep.SCANVIDeep` explainer
+    shap_values
+        :class:`~numpy.ndarray` Expected SHAP values
+    subset
         When set to true, calculate contribution by subsetting for test cells which belong to that
         particual classifier.
         When set to false, be generic and return contributing features even when testing set has

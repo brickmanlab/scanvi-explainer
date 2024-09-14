@@ -4,7 +4,7 @@ import anndata
 import numpy as np
 import torch
 from scvi import REGISTRY_KEYS
-from scvi.model._scanvi import SCANVI
+from scvi.model import SCANVI
 from sklearn.model_selection import train_test_split
 
 
@@ -14,7 +14,7 @@ def get_labels_key(model: SCANVI) -> str:
     Parameters
     ----------
     model : SCANVI
-        SCANVI model
+        :class:`~scvi.model.SCANVI` model
 
     Returns
     -------
@@ -29,8 +29,8 @@ def get_layer_key(model: SCANVI) -> str:
 
     Parameters
     ----------
-    model : SCANVI
-        SCANVI model
+    model
+        :class:`~scvi.model.SCANVI` model
 
     Returns
     -------
@@ -56,14 +56,14 @@ def train_test_group_split(
 
     Parameters
     ----------
-    adata : anndata.AnnData
-        Annotated dataset
+    adata
+        :class:`~anndata.AnnData` Annotated dataset
     groupby : str
         Column in metadata by which the dataset should be split by
-    train_size : float, optional
-        Training size (background), by default 0.8
-    batch_size : int, optional
-        Number of cells used from each group, by default 128
+    train_size
+        :obj:`float` Training size (background), by default 0.8
+    batch_size
+        :obj:`int` Number of cells used from each group, by default 128
 
     Returns
     -------
