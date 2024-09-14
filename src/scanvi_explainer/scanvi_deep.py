@@ -5,7 +5,7 @@ import numpy as np
 import rich
 from packaging import version
 from scvi import REGISTRY_KEYS
-from scvi.model._scanvi import SCANVI
+from scvi.model import SCANVI
 from shap import Explainer
 from torch import Tensor
 from tqdm.auto import tqdm
@@ -20,7 +20,7 @@ class SCANVIDeep(Explainer):
 
     Parameters
     ----------
-    Explainer : type[Explainer]
+    Explainer
         Main Explainer class from shap package
     """
 
@@ -36,12 +36,12 @@ class SCANVIDeep(Explainer):
 
         Parameters
         ----------
-        model : SCANVI
-            Trained scANVI model
-        train_size : float, optional
-            Training size (background), by default 0.8
-        batch_size : int, optional
-            Number of cells used from each group, by default 128
+        model
+            Trained :class:`~scvi.model.SCANVI` model
+        train_size
+            :obj:`float` Training size (background), by default 0.8
+        batch_size
+            :obj:`int` Number of cells used from each group, by default 128
             To ignore the batch_size subsetting, set batch_size=-1
         """
         import torch

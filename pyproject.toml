@@ -17,6 +17,7 @@ keywords = ["shap", "scanvi", "explainer", "interpretability"]
 dependencies = [
     "anndata",
     "rich",
+    "scvi-tools",
     "shap>=0.41.0",
 ]
 classifiers = [
@@ -36,10 +37,10 @@ Issues = "https://github.com/brickmanlab/scanvi-explainer/issues"
 Changelog = "https://github.com/brickmanlab/scanvi-explainer/blob/master/CHANGELOG.md"
 
 [project.optional-dependencies]
-dev = ["ruff", "scvi-tools", "huggingface_hub"]
+dev = ["ruff", "huggingface_hub"]
 doc = [
   "setuptools",
-  "sphinx",
+  "sphinx>=4.0",
   "myst-nb>=1.1",
   "sphinx-book-theme>=1",
   "sphinxcontrib-bibtex>=1"
