@@ -102,10 +102,10 @@ def train_test_group_split(
             torch.float32
         ),
         REGISTRY_KEYS.BATCH_KEY: torch.from_numpy(
-            adata[train].obs[REGISTRY_KEYS.BATCH_KEY].cat.codes.values[:, np.newaxis]
+            adata[train].obs[REGISTRY_KEYS.BATCH_KEY].cat.codes.values[:, np.newaxis].copy()
         ),
         REGISTRY_KEYS.LABELS_KEY: torch.from_numpy(
-            adata[train].obs[groupby].cat.codes.values[:, np.newaxis]
+            adata[train].obs[groupby].cat.codes.values[:, np.newaxis].copy()
         ),
     }
 
@@ -114,10 +114,10 @@ def train_test_group_split(
             torch.float32
         ),
         REGISTRY_KEYS.BATCH_KEY: torch.from_numpy(
-            adata[test].obs[REGISTRY_KEYS.BATCH_KEY].cat.codes.values[:, np.newaxis]
+            adata[test].obs[REGISTRY_KEYS.BATCH_KEY].cat.codes.values[:, np.newaxis].copy()
         ),
         REGISTRY_KEYS.LABELS_KEY: torch.from_numpy(
-            adata[test].obs[groupby].cat.codes.values[:, np.newaxis]
+            adata[test].obs[groupby].cat.codes.values[:, np.newaxis].copy()
         ),
     }
 
