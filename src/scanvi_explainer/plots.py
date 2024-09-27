@@ -36,7 +36,6 @@ def feature_plot(
     fig, ax = plt.subplots(nrows, 2, sharex=False, figsize=[20, 40])
 
     for idx, ct in enumerate(classes):
-
         shaps = pd.DataFrame(shap_values[idx], columns=features)
 
         if subset:
@@ -61,7 +60,7 @@ def feature_plot(
             )
 
             avg = pd.concat([positive, negative])
-            title = f"Mean(SHAP value average importance for: {ct}"
+            title = f"Average SHAP value importance for: {ct}"
 
         else:
             avg = (
