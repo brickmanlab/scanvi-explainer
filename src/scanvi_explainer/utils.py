@@ -13,7 +13,7 @@ def get_labels_key(model: SCANVI) -> str:
 
     Parameters
     ----------
-    model : SCANVI
+    model
         :class:`~scvi.model.SCANVI` model
 
     Returns
@@ -83,7 +83,6 @@ def train_test_group_split(
 
     train, test = [], []
     for _, cells in groups.groups.items():
-
         cells = (
             rng.choice(cells.values, batch_size, replace=False)
             if len(cells.values) > batch_size and batch_size != -1

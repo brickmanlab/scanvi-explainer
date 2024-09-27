@@ -56,8 +56,9 @@ extensions = [
 
 autosummary_generate = True
 autodoc_member_order = "groupwise"
+bibtex_reference_style = "author_year"
 default_role = "literal"
-napoleon_google_docstring = False
+napoleon_google_docstring = True
 napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = False
 napoleon_use_rtype = True  # having a separate entry generally helps readability
