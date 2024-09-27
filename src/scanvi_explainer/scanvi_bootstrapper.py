@@ -23,7 +23,7 @@ class SCANVIBoostrapper:
         ----------
         model
             Trained :class:`~scvi.model.SCANVI` model
-        n_bootstraps : int, optional
+        n_bootstraps : int
             Number of bootstraps, by default 25
         """
 
@@ -105,7 +105,7 @@ class SCANVIBoostrapper:
             SHAP values
         features : list[str]
             Features (genes)
-        top_n : int, optional
+        top_n : int
             Number of top features to subset, by default 10
 
         Returns
@@ -135,17 +135,17 @@ class SCANVIBoostrapper:
         ----------
         shap_values : list
             SHAP values
-        n_features : int, optional
+        n_features : int
             Number of features to subset, by default 10
-        metric : Callable[..., ArrayLike], optional
+        metric : Callable[..., ArrayLike]
             Statistical measurement of each boostrap, by default np.mean
-        kind : Literal[&quot;boxplot&quot;, &quot;barplot&quot;], optional
+        kind : Literal[&quot;boxplot&quot;, &quot;barplot&quot;]
             Type of plot, by default "boxplot"
-        n_cols : int, optional
+        n_cols : int
             Number of columns for subplots, by default 3
-        figsize : tuple[int, int], optional
+        figsize : tuple[int, int]
             Figure size, by default [20, 20]
-        return_fig : bool, optional
+        return_fig : bool
             Flag to return figure object, by default False
 
         Returns

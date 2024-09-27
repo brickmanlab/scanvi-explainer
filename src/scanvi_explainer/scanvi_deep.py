@@ -16,7 +16,8 @@ torch = None
 
 
 class SCANVIDeep(Explainer):
-    """SCANVIDeep is extension of DeepExplainer
+    """SCANVIDeep is an extension of DeepExplainer :cite:p:`NIPS2017_7062` for models trained using
+    SCANVI :cite:p:`Xu2021`.
 
     Parameters
     ----------

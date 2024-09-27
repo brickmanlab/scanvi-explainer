@@ -23,6 +23,20 @@ import scanvi_explainer
     scanvi_deep.SCANVIDeep
 ```
 
+## SCANVIBoostrapper
+
+```{eval-rst}
+.. currentmodule:: scanvi_explainer
+```
+
+```{eval-rst}
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    scanvi_bootstrapper.SCANVIBoostrapper
+```
+
 ## Utilities
 
 ```{eval-rst}
@@ -34,6 +48,8 @@ import scanvi_explainer
     :nosignatures:
     :toctree: generated/
 
+    utils.get_labels_key
+    utils.get_layer_key
     utils.train_test_group_split
 ```
 
