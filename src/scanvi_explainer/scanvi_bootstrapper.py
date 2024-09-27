@@ -95,7 +95,7 @@ class SCANVIBoostrapper:
 
     @staticmethod
     def _filter(
-        shap_values: list, features: list[str], top_n: int = 10
+        shap_values: list, features: list[str], top_n: None | int = 10
     ) -> pd.DataFrame:
         """Helper function for filtering top positive only SHAP features.
 
@@ -106,7 +106,8 @@ class SCANVIBoostrapper:
         features : list[str]
             Features (genes)
         top_n : int
-            Number of top features to subset, by default 10
+            Number of top features to subset, by default 10. If None is specified, the filter does
+            not apply.
 
         Returns
         -------
@@ -125,6 +126,7 @@ class SCANVIBoostrapper:
         n_features: int = 10,
         metric_fn: Callable[..., ArrayLike] = np.mean,
         kind: Literal["boxplot", "barplot"] = "boxplot",
+        gene_symbols: None | str = None,
         n_cols: int = 3,
         figsize: tuple[int, int] = (20, 20),
         return_fig: bool = False,
@@ -141,6 +143,8 @@ class SCANVIBoostrapper:
             Statistical measurement of each boostrap, by default np.mean
         kind : Literal[&quot;boxplot&quot;, &quot;barplot&quot;]
             Type of plot, by default "boxplot"
+        gene_symbols: None | str = None
+            Column name in `var` for gene symbols
         n_cols : int
             Number of columns for subplots, by default 3
         figsize : tuple[int, int]
@@ -162,11 +166,20 @@ class SCANVIBoostrapper:
         if kind not in ["boxplot", "barplot"]:
             raise ValueError(f"Specified {kind} not supported!")
 
-        features = self.model.adata.var_names
+        if gene_symbols and gene_symbols not in self.model.adata.var.columns:
+            raise ValueError(
+                "Specified gene_symbol not present in the 'var' of model's adata!"
+            )
+
+        features = (
+            self.model.adata.var[gene_symbols]
+            if gene_symbols
+            else self.model.adata.var_names
+        )
         sample_stat = self.estimate(metric_fn, shap_values)
         labels = self.model.adata.obs[get_labels_key(self.model)].cat.categories
 
-        n_rows = labels.size // n_cols + labels.size % n_cols
+        n_rows = round(labels.size / n_cols)
         fig, ax = plt.subplots(n_rows, n_cols, figsize=figsize)
         for idx, label in enumerate(labels):
             data = self._filter(sample_stat[idx], features, n_features).T
@@ -193,6 +206,10 @@ class SCANVIBoostrapper:
                     data=data,
                 ).set(title=label)
 
+        # clean axes which are empty
+        # from: https://stackoverflow.com/a/76269136
+        _ = [fig.delaxes(ax_) for ax_ in ax.flatten() if not ax_.has_data()]
+
         fig.suptitle(
             f"Top {n_features} SHAP values based on boostrapping (n={self.NUM_OF_BOOTSRAPS})"
         )
@@ -204,3 +221,41 @@ class SCANVIBoostrapper:
             return fig
 
         return None
+
+    def save(self, shap_values: list[np.ndarray], filename: str):
+        """Save results to feather format.
+
+        Parameters
+        ----------
+        shap_values : list[np.ndarray]
+            SHAP values
+        filename : str
+            Path to filename containing .feather extension
+
+        Examples
+        --------
+        >>> lvae = scvi.model.SCANVI.load("...")
+        >>> bootstrapper = SCANVIBoostrapper(lvae, n_bootstraps=10)
+        >>> shap_values = bootstrapper.run(train_size=0.8, batch_size=64)
+        >>> bootstrapper.save(shap_values, "./bootstrapped_shaps.feather")
+        """
+
+        features = self.model.adata.var_names
+        sample_stat = self.estimate(np.mean, shap_values)
+        labels = self.model.adata.obs[get_labels_key(self.model)].cat.categories
+
+        res = []
+        for idx, label in enumerate(labels):
+            data = self._filter(sample_stat[idx], features, top_n=None)
+            data.columns = [f"n_{c}" for c in data.columns]
+            data["label"] = label
+
+            res.append(data)
+
+        if not filename.endswith(".feather"):
+            filename += ".feather"
+
+        try:
+            pd.concat(res).reset_index().to_feather(filename)
+        except IOError:
+            raise
