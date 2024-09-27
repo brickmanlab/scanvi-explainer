@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scanvi-explainer"
-version = "0.3.0"
+version = "0.3.1"
 description = "Exapliner of scANVI using SHAP"
 authors = [
     {name = "Martin Proks", email = "martin.proks@sund.ku.dk"},
@@ -17,6 +17,7 @@ keywords = ["shap", "scanvi", "explainer", "interpretability"]
 dependencies = [
     "anndata",
     "pandas<=2.0", # required by scvi-tool for now
+    "pyarrow",
     "rich",
     "seaborn",
     "scvi-tools",
