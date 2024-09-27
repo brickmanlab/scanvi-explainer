@@ -46,7 +46,7 @@ def train_test_group_split(
     train_size: float = 0.8,
     batch_size: int = 128,
     layer: str = "counts",
-) -> tuple[dict[str, torch.Tensor]]:
+) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
     """Function to split anndata object 80/20 per group in format required for SCANVIDeep explainer.
 
     Bigger datasets might not fit to the GPU memory. To overcome this issue we recommend setting
@@ -67,7 +67,7 @@ def train_test_group_split(
 
     Returns
     -------
-    tuple[dict[str, torch.Tensor]]
+    tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]
         Train and test splits
     """
 
@@ -98,11 +98,14 @@ def train_test_group_split(
     train, test = np.concatenate(train), np.concatenate(test)
 
     X_train = {
-        REGISTRY_KEYS.X_KEY: torch.from_numpy(adata[train].layers[layer].A).type(
-            torch.float32
-        ),
+        REGISTRY_KEYS.X_KEY: torch.from_numpy(
+            adata[train].layers[layer].todense()
+        ).type(torch.float32),
         REGISTRY_KEYS.BATCH_KEY: torch.from_numpy(
-            adata[train].obs[REGISTRY_KEYS.BATCH_KEY].cat.codes.values[:, np.newaxis].copy()
+            adata[train]
+            .obs[REGISTRY_KEYS.BATCH_KEY]
+            .cat.codes.values[:, np.newaxis]
+            .copy()
         ),
         REGISTRY_KEYS.LABELS_KEY: torch.from_numpy(
             adata[train].obs[groupby].cat.codes.values[:, np.newaxis].copy()
@@ -110,15 +113,18 @@ def train_test_group_split(
     }
 
     X_test = {
-        REGISTRY_KEYS.X_KEY: torch.from_numpy(adata[test].layers[layer].A).type(
+        REGISTRY_KEYS.X_KEY: torch.from_numpy(adata[test].layers[layer].todense()).type(
             torch.float32
         ),
         REGISTRY_KEYS.BATCH_KEY: torch.from_numpy(
-            adata[test].obs[REGISTRY_KEYS.BATCH_KEY].cat.codes.values[:, np.newaxis].copy()
+            adata[test]
+            .obs[REGISTRY_KEYS.BATCH_KEY]
+            .cat.codes.values[:, np.newaxis]
+            .copy()
         ),
         REGISTRY_KEYS.LABELS_KEY: torch.from_numpy(
             adata[test].obs[groupby].cat.codes.values[:, np.newaxis].copy()
         ),
     }
 
-    return X_train, X_test
+    return (X_train, X_test)
