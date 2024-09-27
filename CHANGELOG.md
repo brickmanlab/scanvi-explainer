@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning][].
 [keep a changelog]: https://keepachangelog.com/en/1.0.0/
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
+## Version 0.3.1
+
+### Added
+
+- `SCANVIBoostrapper.save` for saving bootstrap results into feather format [0ebd757]
+- New parameter `gene_symbols` for `plots.feature_plot` and `SCANVIBoostrapper.feature_plot` [81349a7]
+
+### Changed
+
+- Empty subplots are removed from the figure [81349a7]
+
 ## Version 0.3.0
 
 ### Added
