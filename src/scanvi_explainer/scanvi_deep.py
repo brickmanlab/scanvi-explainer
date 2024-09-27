@@ -169,7 +169,22 @@ class SCANVIDeep(Explainer):
 
         return torch.zeros_like(X).cpu().numpy()
 
-    def shap_values(self):
+    def shap_values(self, with_labels: bool = False) -> np.ndarray | list[np.ndarray]:
+        """Estimate SHAP values
+
+        Parameters
+        ----------
+        with_labels: bool
+            Return labels for X_test
+
+        Returns
+        -------
+        np.ndarray | list[np.ndarray]
+            3D dataset where index
+            0: classifier index
+            1: X_test
+            2: Features
+        """
         import torch
 
         # X ~ self.model_input
@@ -188,7 +203,6 @@ class SCANVIDeep(Explainer):
 
         # compute the attributions
         output_phis = []
-        self.memory_stats()
 
         for i in tqdm(range(model_output_ranks.shape[1])):
             phis = np.zeros(X.shape)
@@ -209,12 +223,17 @@ class SCANVIDeep(Explainer):
 
                 # assign the attributions to the right part of the output arrays
                 phis[j] = (
-                    torch.from_numpy(
-                        sample_phis[self.data[REGISTRY_KEYS.X_KEY].shape[0] :]
+                    (
+                        torch.from_numpy(
+                            sample_phis[self.data[REGISTRY_KEYS.X_KEY].shape[0] :]
+                        )
+                        * (X[j : j + 1] - self.data[REGISTRY_KEYS.X_KEY])
                     )
-                    * (X[j : j + 1] - self.data[REGISTRY_KEYS.X_KEY])
-                ).mean(0)
-                # .cpu().detach().numpy().mean(0)
+                    .cpu()
+                    .detach()
+                    .numpy()
+                    .mean(0)
+                )
 
             output_phis.append(phis)
             torch.cuda.empty_cache()
@@ -224,6 +243,13 @@ class SCANVIDeep(Explainer):
             handle.remove()
         self.remove_attributes(self.model)
         torch.cuda.empty_cache()
+
+        if with_labels:
+            return [
+                self.test[REGISTRY_KEYS.LABELS_KEY],
+                np.concatenate([output_phis], -1),
+            ]
+
         return output_phis
 
 

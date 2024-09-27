@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scanvi-explainer"
-version = "0.2.1"
+version = "0.3.0dev"
 description = "Exapliner of scANVI using SHAP"
 authors = [
     {name = "Martin Proks", email = "martin.proks@sund.ku.dk"},
@@ -16,6 +16,7 @@ requires-python = ">=3.10"
 keywords = ["shap", "scanvi", "explainer", "interpretability"]
 dependencies = [
     "anndata",
+    "pandas<=2.0", # required by scvi-tool for now
     "rich",
     "seaborn",
     "scvi-tools",
@@ -38,7 +39,12 @@ Issues = "https://github.com/brickmanlab/scanvi-explainer/issues"
 Changelog = "https://github.com/brickmanlab/scanvi-explainer/blob/master/CHANGELOG.md"
 
 [project.optional-dependencies]
-dev = ["ruff", "huggingface_hub"]
+dev = [
+  "huggingface_hub", 
+  "ipykernel",
+  "ipywidgets",
+  "ruff"
+]
 doc = [
   "setuptools",
   "sphinx>=4.0",
@@ -46,3 +52,9 @@ doc = [
   "sphinx-book-theme>=1",
   "sphinxcontrib-bibtex>=1"
 ]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.mypy]
+ignore_missing_imports = true
